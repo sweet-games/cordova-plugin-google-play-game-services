@@ -1,0 +1,53 @@
+<?xml version='1.1' encoding='utf-8'?>
+<plugin id="cordova-plugin-google-play-services" version="0.1.0" xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <name>Cordova plugin for Google Play Game Services</name>
+
+  <keywords>cordova,Social,google,play,games,save game,login,achievements,leaderboards</keywords>
+
+  <repo>git@github.com:sweet-games/cordova-plugin-google-play-game-services.git</repo>
+  <issue>https://github.com/sweet-games/cordova-plugin-google-play-game-services/issues</issue>
+
+  <js-module name="PlayGamesServices" src="www/play-games-services.js">
+    <clobbers target="cordova.plugins.playGamesServices"/>
+    <clobbers target="window.plugins.playGamesServices"/>
+  </js-module>
+
+  <engines>
+    <engine name="cordova" version=">=4.0.0"/>
+  </engines>
+
+  <platform name="android">
+    <preference name="APP_ID"/>
+    <preference name="ANDROID_PLAY_SERVICES_GAMES_VERSION" default="+"/>
+    <preference name="ANDROID_PLAY_SERVICES_AUTH_VERSION" default="+"/>
+
+    <config-file target="config.xml" parent="/*">
+      <feature name="PlayGamesServices">
+        <param name="android-package" value="com.sweetgames.cordova.plugins.PlayGamesServices"/>
+        <param name="onload" value="true"/>
+      </feature>
+    </config-file>
+
+    <config-file target="AndroidManifest.xmk" parent="/manifest/application">
+      <meta-data
+              android:name="com.google.android.gms.games.APP_ID"
+              android:value="@string/app_id"/>
+    </config-file>
+
+    <config-file target="AndroidManifest.xml" parent="/manifest">
+      <uses-permission android:name="android.permission.INTERNET"/>
+      <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    </config-file>
+
+    <config-file target="app/src/main/res/values/strings.xml" parent="/resources">
+      <string name="app_id">$APP_ID</string>
+    </config-file>
+
+    <source-file src="src/PlayGamesServices.java"
+                 target-dir="src/com/sweetgames/cordova/plugins/"/>
+
+    <framework src="com.google.android.gms:play-services-games:$ANDROID_PLAY_SERVICES_GAMES_VERSION"/>
+    <framework src="com.google.android.gms:play-services-auth:$ANDROID_PLAY_SERVICES_AUTH_VERSION"/>
+  </platform>
+</plugin>

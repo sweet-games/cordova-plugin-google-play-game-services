@@ -1,0 +1,26 @@
+{
+  "name": "cordova-plugin-google-play-game-services",
+  "version": "0.0.1",
+  "description": "Cordova wrapper fo Google Play Game Services",
+  "cordova": {
+    "id": "cordova-plugin-google-play-game-services",
+    "platforms": [
+      "android"
+    ]
+  },
+  "repository": "git@github.com:sweet-games/cordova-plugin-google-play-game-services.git",
+  "keywords": [
+    "ecosystem:cordova",
+    "cordova-android",
+    "gpgs",
+    "leaderboard",
+    "game-services"
+  ],
+  "author": "Naveed Ahmad",
+  "contributors": [],
+  "license": "MIT",
+  "bugs": "https://github.com/sweet-games/cordova-plugin-google-play-game-services/issues",
+  "homepage": "https://github.com/sweet-games/cordova-plugin-google-play-game-services/#README.md",
+  "devDependencies": {},
+  "dependencies": {}
+}
