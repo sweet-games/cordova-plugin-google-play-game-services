@@ -1,20 +1,18 @@
 package com.sweetgames.cordova.plugins;
 
 //Google Play Services for Games
+
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
 import com.google.android.gms.games.AchievementsClient;
-import com.google.android.gms.games.AnnotatedData;
 import com.google.android.gms.games.EventsClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.LeaderboardsClient;
 import com.google.android.gms.games.Player;
 import com.google.android.gms.games.PlayersClient;
-import com.google.android.gms.games.event.Event;
-import com.google.android.gms.games.event.EventBuffer;
 import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -32,7 +30,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.support.annotation.NonNull;
+import androidx.annotation.NonNull;
+
 import android.content.Intent;
 
 /**
@@ -70,11 +69,11 @@ public class PlayGamesServices extends CordovaPlugin {
     }
 
     /**
-     * 
+     *
      */
     @Override
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
-       this.connectionCallbackContext = callbackContext;
+        this.connectionCallbackContext = callbackContext;
 
         JSONObject options;
         try {
@@ -86,47 +85,47 @@ public class PlayGamesServices extends CordovaPlugin {
         }
 
         if ("initialize".equals(action)) {
-            return true;
         } else if ("login".equals(action)) {
-            startSignInIntent(callbackContext);
-            return true;
-        }  else if ("isLoggedIn".equals(action)) {
-           PluginResult result = new PluginResult(PluginResult.Status.OK, signedIn.toString());
-           callbackContext.sendPluginResult(result);
-           return true;
-       }  else if ("logOut".equals(account){
-           //TODO: implement signout
-          return;
+            startSignInIntent();
+        } else if ("isLoggedIn".equals(action)) {
+            PluginResult result = new PluginResult(PluginResult.Status.OK, signedIn.toString());
+            callbackContext.sendPluginResult(result);
+        } else if ("logOut".equals(action)) {
+            //TODO: implement signout
         } else if ("submitScore".equals(action)) {
             onSubmitScore(options.getString("leaderBoardId"), options.getInt("score"), callbackContext);
-            return true;
         } else if ("unlockAchievement".equals(action)) {
             onUnlockAchievement(options.getString("achievementId"), callbackContext);
-            return true;
         } else if ("showLeaderboard".equals(action)) {
-            onShowLeaderboardsRequested(callbackContext);
-            return true;
+            onShowLeaderboardsRequested();
         } else if ("showAchievements".equals(action)) {
-            onShowAchievementsRequested(callbackContext);
-            return true;
+            onShowAchievementsRequested();
         } else if ("fetchPlayerInfo".equals(action)) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, displayName);
-            callbackContext.sendPluginResult(result);
-            return true;
+            try {
+                JSONObject result = new JSONObject();
+                result.put("EVENT", "PLAYER_INFO");
+                result.put("displayName", displayName);
+                result.put("playerId", playerId);
+
+                sendResult(true, result);
+            } catch (JSONException ignored) {
+                PluginResult result = new PluginResult(PluginResult.Status.OK, displayName);
+                callbackContext.sendPluginResult(result);
+            }
         }
 
-        return false;
+        return true;
     }
 
     @Override
-    protected void onResume() {
-      super.onResume();
-      signInSilently();
+    public void onResume(boolean multitasking) {
+        super.onResume(multitasking);
+        signInSilently();
     }
 
     private void sendResult(Boolean success, JSONObject message) {
         if (null == connectionCallbackContext) {
-           return;
+            return;
         }
 
         PluginResult result;
@@ -144,7 +143,7 @@ public class PlayGamesServices extends CordovaPlugin {
     /**
      * Simple sign-in with UI to notify user which account to use
      */
-    private void startSignInIntent(CallbackContext callbackContext) {
+    private void startSignInIntent() {
         LOG.d(LOG_TAG, "Starting Play Services signin intent");
         cordova.setActivityResultCallback(this);
         cordova.startActivityForResult(this, googleSignInClient.getSignInIntent(), RC_SIGN_IN);
@@ -169,13 +168,19 @@ public class PlayGamesServices extends CordovaPlugin {
                     message = "GOOGLE_SIGNIN_FAIL";
                 }
 
-                JSONObject result = new JSONObject();
-                result.put("EVENT", "SIGN_IN_FAILED");
-                result.put("message", message);
+                try {
+                    JSONObject result = new JSONObject();
+                    result.put("EVENT", "SIGN_IN_FAILED");
+                    result.put("message", message);
 
-                sendResult(false, result);
+                    sendResult(false, result);
+                } catch (JSONException e) {
+
+                }
 
                 onDisconnected();
+            } catch (JSONException ignored) {
+
             }
         }
 
@@ -195,20 +200,25 @@ public class PlayGamesServices extends CordovaPlugin {
                     @Override
                     public void onComplete(@NonNull Task<GoogleSignInAccount> task) {
                         if (task.isSuccessful()) {
-                           signedIn = true;
-                           JSONObject result = new JSONObject();
-                           result.put("EVENT", "SILENT_SIGNED_IN_SUCCESS");
-                           sendResult(true, result);
+                            signedIn = true;
+                            try {
+                                JSONObject result = new JSONObject();
+                                result.put("EVENT", "SILENT_SIGNED_IN_SUCCESS");
+                                sendResult(true, result);
+                            } catch (JSONException e) {
+                            }
 
                             onConnected(task.getResult());
                         } else {
                             onDisconnected();
                             signedIn = false;
 
-                            JSONObject result = new JSONObject();
-                            result.put("EVENT", "SILENT_SIGNED_IN_FAILED");
-
-                            sendResult(false, result);
+                            try {
+                                JSONObject result = new JSONObject();
+                                result.put("EVENT", "SILENT_SIGNED_IN_FAILED");
+                                sendResult(false, result);
+                            } catch (JSONException e) {
+                            }
                         }
                     }
                 });
@@ -227,17 +237,23 @@ public class PlayGamesServices extends CordovaPlugin {
             @Override
             public void onComplete(@NonNull Task<Player> task) {
                 if (task.isSuccessful()) {
-                    displayName = task.getResult().getDisplayName();
-                    playerId = task.getResult().getPlayerId();
+                    try {
+                        displayName = task.getResult().getDisplayName();
+                        playerId = task.getResult().getPlayerId();
+                    } catch (NullPointerException ignores) {
 
+                    }
+                    try {
+                        JSONObject result = new JSONObject();
 
-                JSONObject result = new JSONObject();
+                        result.put("EVENT", "PLAYER_INFO");
+                        result.put("displayName", displayName);
+                        result.put("playerId", playerId);
 
-                result.put("EVENT", "PLAYER_INFO");
-                result.put("displayName", displayName);
-                result.put("playerId", playerId);
+                        sendResult(true, result);
+                    } catch (JSONException e) {
 
-                sendResult(true, result);
+                    }
                 } else {
                     displayName = "???";
                     playerId = "???";
@@ -254,15 +270,19 @@ public class PlayGamesServices extends CordovaPlugin {
         displayName = "???";
         playerId = "???";
 
-       JSONObject result = new JSONObject();
-       result.put("EVENT", "DISCONNECTED");
-       sendResult(true, result)
+        try {
+            JSONObject result = new JSONObject();
+            result.put("EVENT", "DISCONNECTED");
+            sendResult(true, result);
+        } catch (JSONException e) {
+
+        }
     }
 
-    public void onShowAchievementsRequested(CallbackContext callbackContext) {
+    public void onShowAchievementsRequested() {
         if (!signedIn) {
             LOG.d(LOG_TAG, "Opened Achievements when not signed in, signing in instead.");
-            startSignInIntent(callbackContext);
+            startSignInIntent();
             return;
         }
 
@@ -271,24 +291,32 @@ public class PlayGamesServices extends CordovaPlugin {
             public void onSuccess(Intent intent) {
                 cordova.getActivity().startActivityForResult(intent, RC_UNUSED);
 
-                JSONObject result = new JSONObject();
-                result.put("EVENT", "SHOW_ACHIEVEMENT_SUCCESS");
-                sendResult(true, result);
+                try {
+                    JSONObject result = new JSONObject();
+                    result.put("EVENT", "SHOW_ACHIEVEMENT_SUCCESS");
+                    sendResult(true, result);
+                } catch (JSONException ignored) {
+
+                }
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
+                try {
                     JSONObject result = new JSONObject();
                     result.put("EVENT", "SHOW_ACHIEVEMENT_FAILED");
-                sendResult(false, result);
+                    sendResult(false, result);
+                } catch (JSONException ex) {
+
+                }
             }
         });
     }
 
-    public void onShowLeaderboardsRequested(CallbackContext callbackContext) {
+    public void onShowLeaderboardsRequested() {
         if (!signedIn) {
             LOG.d(LOG_TAG, "Opened leaderboard when not signed in, signing in instead.");
-            startSignInIntent(callbackContext);
+            startSignInIntent();
             return;
         }
 
@@ -296,17 +324,24 @@ public class PlayGamesServices extends CordovaPlugin {
             @Override
             public void onSuccess(Intent intent) {
                 cordova.getActivity().startActivityForResult(intent, RC_LEADERBOARD_UI);
-                JSONObject result = new JSONObject();
-                                    result.put("EVENT", "SHOW_LEADERBOARD_SUCCESS");
-                sendResult(true, result);
+                try {
+                    JSONObject result = new JSONObject();
+                    result.put("EVENT", "SHOW_LEADERBOARD_SUCCESS");
+                    sendResult(true, result);
+                } catch (JSONException e) {
+
+                }
             }
         }).addOnFailureListener(new OnFailureListener() {
             @Override
             public void onFailure(@NonNull Exception e) {
-            JSONObject result = new JSONObject();
-            result.put("EVENT", "SHOW_LEADERBOARD_FAILED");
+                try {
+                    JSONObject result = new JSONObject();
+                    result.put("EVENT", "SHOW_LEADERBOARD_FAILED");
 
-            sendResult(false, result);
+                    sendResult(false, result);
+                } catch (JSONException ex) {
+                }
             }
         });
     }
@@ -320,13 +355,15 @@ public class PlayGamesServices extends CordovaPlugin {
         }
 
         LOG.d(LOG_TAG, "Submitting Score: " + score.toString() + " to: " + scoreBoard);
-        PluginResult result = new PluginResult(PluginResult.Status.OK, "Score submitted");
-        callbackContext.sendPluginResult(result);
         leaderboardsClient.submitScore(scoreBoard, score);
 
-         JSONObject result = new JSONObject();
-         result.put("EVENT", "SUBMIT_SCORE_SUCCESS");
-         sendResult(true, result);
+        try {
+            JSONObject result = new JSONObject();
+            result.put("EVENT", "SUBMIT_SCORE_SUCCESS");
+            sendResult(true, result);
+        } catch (JSONException e) {
+
+        }
     }
 
     public void onUnlockAchievement(String achievementId, CallbackContext callbackContext) {
@@ -336,6 +373,7 @@ public class PlayGamesServices extends CordovaPlugin {
             callbackContext.sendPluginResult(result);
             return;
         }
+
         LOG.d(LOG_TAG, "Unlocking achievement: " + achievementId);
         PluginResult result = new PluginResult(PluginResult.Status.OK, "Achievement submitted");
         callbackContext.sendPluginResult(result);
