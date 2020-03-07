@@ -49,6 +49,7 @@ public class PlayGamesServices extends CordovaPlugin {
 
     private String displayName = "???";
     private String playerId = "???";
+    private String playerEmail = "???";
     private Boolean signedIn = false;
 
     private static final int RC_UNUSED = 5001;
@@ -64,8 +65,6 @@ public class PlayGamesServices extends CordovaPlugin {
         // Create the client used to sign in to Google services.
         googleSignInClient = GoogleSignIn.getClient(cordova.getActivity(),
                 new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build());
-
-        signInSilently();
     }
 
     /**
@@ -80,11 +79,13 @@ public class PlayGamesServices extends CordovaPlugin {
             options = args.getJSONObject(0);
         } catch (JSONException e) {
             LOG.d(LOG_TAG, "Unable to parse json: " + e.getMessage());
+
             callbackContext.error("Error encountered: " + e.getMessage());
             return false;
         }
 
         if ("initialize".equals(action)) {
+            signInSilently();
         } else if ("login".equals(action)) {
             startSignInIntent();
         } else if ("isLoggedIn".equals(action)) {
@@ -92,26 +93,16 @@ public class PlayGamesServices extends CordovaPlugin {
             callbackContext.sendPluginResult(result);
         } else if ("logOut".equals(action)) {
             //TODO: implement signout
-        } else if ("submitScore".equals(action)) {
+        } else if ("submitScore".equals(action) || "submitScoreNow".equals(action)) {
             onSubmitScore(options.getString("leaderBoardId"), options.getInt("score"), callbackContext);
         } else if ("unlockAchievement".equals(action)) {
             onUnlockAchievement(options.getString("achievementId"), callbackContext);
-        } else if ("showLeaderboard".equals(action)) {
+        } else if ("showLeaderboard".equals(action) || "showAllLeaderboards".equals(action)) {
             onShowLeaderboardsRequested();
         } else if ("showAchievements".equals(action)) {
             onShowAchievementsRequested();
         } else if ("fetchPlayerInfo".equals(action)) {
-            try {
-                JSONObject result = new JSONObject();
-                result.put("EVENT", "PLAYER_INFO");
-                result.put("displayName", displayName);
-                result.put("playerId", playerId);
-
-                sendResult(true, result);
-            } catch (JSONException ignored) {
-                PluginResult result = new PluginResult(PluginResult.Status.OK, displayName);
-                callbackContext.sendPluginResult(result);
-            }
+            onShowFetchPlayerInfoRequested();
         }
 
         return true;
@@ -151,6 +142,8 @@ public class PlayGamesServices extends CordovaPlugin {
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        LOG.d(LOG_TAG, "Activity result" + requestCode);
+
         if (requestCode == RC_SIGN_IN) {
             Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(data);
 
@@ -164,9 +157,12 @@ public class PlayGamesServices extends CordovaPlugin {
                 onConnected(account);
             } catch (ApiException apiException) {
                 String message = apiException.getMessage();
+
                 if (message == null || message.isEmpty()) {
                     message = "GOOGLE_SIGNIN_FAIL";
                 }
+
+                LOG.d(LOG_TAG, "LOGIN FAILED" + message);
 
                 try {
                     JSONObject result = new JSONObject();
@@ -178,19 +174,28 @@ public class PlayGamesServices extends CordovaPlugin {
 
                 }
 
-                onDisconnected();
+                onDisconnected("Login failed" + message);
             } catch (JSONException ignored) {
+                LOG.d(LOG_TAG, "LOGIN FAILED JSON parsing err");
 
             }
         }
-
     }
 
     private void signInSilently() {
         GoogleSignInAccount account = GoogleSignIn.getLastSignedInAccount(cordova.getActivity());
+        LOG.d(LOG_TAG, "Signing in Silently");
 
         if (null != account) {
-            LOG.d(LOG_TAG, "Existing account signed in before, setting up");
+            LOG.d(LOG_TAG, "Signing in Silently SUCCESS");
+
+            try {
+                JSONObject result = new JSONObject();
+                result.put("EVENT", "SILENT_SIGNED_IN_SUCCESS");
+                sendResult(true, result);
+            } catch (JSONException e) {
+            }
+
             onConnected(account);
             return;
         }
@@ -210,7 +215,14 @@ public class PlayGamesServices extends CordovaPlugin {
 
                             onConnected(task.getResult());
                         } else {
-                            onDisconnected();
+                            LOG.d(LOG_TAG, "Signing in Silently failed");
+                            Exception taskEx = task.getException();
+
+                            if (null != taskEx) {
+                                LOG.d(LOG_TAG, taskEx.getMessage());
+                            }
+
+                            onDisconnected("Signing in Silently failed");
                             signedIn = false;
 
                             try {
@@ -224,6 +236,61 @@ public class PlayGamesServices extends CordovaPlugin {
                 });
     }
 
+    private void onShowFetchPlayerInfoRequested() {
+        if (!signedIn) {
+            LOG.d(LOG_TAG, "Fetched player info when not signed in, signing in instead.");
+            startSignInIntent();
+            return;
+        }
+
+        if ("???" == playerId) {
+            playersClient.getCurrentPlayer().addOnCompleteListener(new OnCompleteListener<Player>() {
+                @Override
+                public void onComplete(@NonNull Task<Player> task) {
+                    if (task.isSuccessful()) {
+                        Player account = task.getResult();
+
+                        try {
+                            displayName = account.getDisplayName();
+                            playerId = account.getPlayerId();
+                        } catch (NullPointerException ignores) {
+
+                        }
+
+                        try {
+                            JSONObject result = new JSONObject();
+
+                            result.put("EVENT", "PLAYER_INFO");
+                            result.put("displayName", displayName);
+                            result.put("playerId", playerId);
+                            result.put("playerEmail", playerEmail);
+
+                            sendResult(true, result);
+                        } catch (JSONException e) {
+
+                        }
+                    } else {
+                        displayName = "???";
+                        playerId = "???";
+                    }
+                }
+            });
+        } else{
+            try {
+                JSONObject result = new JSONObject();
+
+                result.put("EVENT", "PLAYER_INFO");
+                result.put("displayName", displayName);
+                result.put("playerId", playerId);
+                result.put("playerEmail", playerEmail);
+
+                sendResult(true, result);
+            } catch (JSONException e) {
+
+            }
+        }
+    }
+
     private void onConnected(GoogleSignInAccount googleSignInAccount) {
         LOG.d(LOG_TAG, "Connected");
 
@@ -231,51 +298,65 @@ public class PlayGamesServices extends CordovaPlugin {
         leaderboardsClient = Games.getLeaderboardsClient(cordova.getActivity(), googleSignInAccount);
         playersClient = Games.getPlayersClient(cordova.getActivity(), googleSignInAccount);
 
+        playerId = googleSignInAccount.getId();
+        displayName = googleSignInAccount.getDisplayName();
+        playerEmail = googleSignInAccount.getEmail();
+
         signedIn = true;
 
-        playersClient.getCurrentPlayer().addOnCompleteListener(new OnCompleteListener<Player>() {
-            @Override
-            public void onComplete(@NonNull Task<Player> task) {
-                if (task.isSuccessful()) {
-                    try {
-                        displayName = task.getResult().getDisplayName();
-                        playerId = task.getResult().getPlayerId();
-                    } catch (NullPointerException ignores) {
+        if ("???" != playerId) {
+            playersClient.getCurrentPlayer().addOnCompleteListener(new OnCompleteListener<Player>() {
+                @Override
+                public void onComplete(@NonNull Task<Player> task) {
+                    if (task.isSuccessful()) {
+                        try {
+                            displayName = task.getResult().getDisplayName();
+                            playerId = task.getResult().getPlayerId();
+                        } catch (NullPointerException ignores) {
 
+                        }
+                        try {
+                            JSONObject result = new JSONObject();
+
+                            result.put("EVENT", "PLAYER_INFO");
+                            result.put("displayName", displayName);
+                            result.put("playerId", playerId);
+                            result.put("playerEmail", playerEmail);
+
+
+                            sendResult(true, result);
+                        } catch (JSONException e) {
+
+                        }
+                    } else {
+                        displayName = "???";
+                        playerId = "???";
                     }
-                    try {
-                        JSONObject result = new JSONObject();
-
-                        result.put("EVENT", "PLAYER_INFO");
-                        result.put("displayName", displayName);
-                        result.put("playerId", playerId);
-
-                        sendResult(true, result);
-                    } catch (JSONException e) {
-
-                    }
-                } else {
-                    displayName = "???";
-                    playerId = "???";
                 }
-            }
-        });
+            });
+        }
     }
 
-    private void onDisconnected() {
+    private void onDisconnected(String message) {
         LOG.d(LOG_TAG, "Disconnected");
+        signedIn = false;
+
+        /*
         achievementsClient = null;
         leaderboardsClient = null;
         playersClient = null;
         displayName = "???";
         playerId = "???";
+        */
 
         try {
             JSONObject result = new JSONObject();
             result.put("EVENT", "DISCONNECTED");
+            result.put("message", message);
+
             sendResult(true, result);
         } catch (JSONException e) {
-
+            e.printStackTrace();
         }
     }
 
