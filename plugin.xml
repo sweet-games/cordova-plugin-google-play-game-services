@@ -44,7 +44,7 @@
       <string name="app_id">$APP_ID</string>
     </config-file>
 
-    <source-file src="src/PlayGamesServices.java"
+    <source-file src="src/android/src/PlayGamesServices.java"
                  target-dir="src/com/sweetgames/cordova/plugins/"/>
 
     <framework src="com.google.android.gms:play-services-games:$ANDROID_PLAY_SERVICES_GAMES_VERSION"/>
