@@ -5,8 +5,15 @@ var PlayGamesServices = function () {
     this.name = PLAY_GAMES_SERVICES;
 };
 
-var successCallback = function (callback, result) {
-    callback(result);
+var handleSuccessCallback = function (callback, result) {
+    try {
+        console.log(PLAY_GAMES_SERVICES, "SUCCESS CALLBACK", JSON.stringify(result))
+        cordova.fireDocumentEvent("play." + result.EVENT, result);
+    } catch (e) {
+    }
+
+    if (callback)
+        callback(result);
 }
 
 var actions = ['initialize', 'login', 'logOut', 'isLoggedIn',
@@ -36,8 +43,7 @@ actions.forEach(function (action) {
         }
 
         exec(function (result) {
-                console.log(PLAY_GAMES_SERVICES, "SUCCESS CALLBACK", JSON.stringify(result))
-                successCallback(success, result);
+                handleSuccessCallback(success, result);
             },
             function (result) {
                 console.log(PLAY_GAMES_SERVICES, "FAILED CALLBACK", JSON.stringify(result))

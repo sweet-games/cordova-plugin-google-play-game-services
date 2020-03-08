@@ -89,8 +89,7 @@ public class PlayGamesServices extends CordovaPlugin {
         } else if ("login".equals(action)) {
             startSignInIntent();
         } else if ("isLoggedIn".equals(action)) {
-            PluginResult result = new PluginResult(PluginResult.Status.OK, signedIn.toString());
-            callbackContext.sendPluginResult(result);
+            checkLoggedIn();
         } else if ("logOut".equals(action)) {
             //TODO: implement signout
         } else if ("submitScore".equals(action) || "submitScoreNow".equals(action)) {
@@ -131,6 +130,13 @@ public class PlayGamesServices extends CordovaPlugin {
         connectionCallbackContext.sendPluginResult(result);
     }
 
+     private void sendUnauthorized(String message) {
+       JSONObject result = new JSONObject();
+       result.put("EVENT", "SIGNIN_REQUIRED");
+       result.put("message", message || "User is not logged in");
+       sendResult(false, result);
+     }
+
     /**
      * Simple sign-in with UI to notify user which account to use
      */
@@ -159,7 +165,7 @@ public class PlayGamesServices extends CordovaPlugin {
                 String message = apiException.getMessage();
 
                 if (message == null || message.isEmpty()) {
-                    message = "GOOGLE_SIGNIN_FAIL";
+                    message = "SIGN_IN_FAILED";
                 }
 
                 LOG.d(LOG_TAG, "LOGIN FAILED" + message);
@@ -177,7 +183,6 @@ public class PlayGamesServices extends CordovaPlugin {
                 onDisconnected("Login failed" + message);
             } catch (JSONException ignored) {
                 LOG.d(LOG_TAG, "LOGIN FAILED JSON parsing err");
-
             }
         }
     }
@@ -188,6 +193,7 @@ public class PlayGamesServices extends CordovaPlugin {
 
         if (null != account) {
             LOG.d(LOG_TAG, "Signing in Silently SUCCESS");
+             signedIn = true;
 
             try {
                 JSONObject result = new JSONObject();
@@ -235,6 +241,18 @@ public class PlayGamesServices extends CordovaPlugin {
                     }
                 });
     }
+
+   private void checkLoggedIn(){
+     JSONObject result = new JSONObject();
+     if(signedIn){
+       result.put("EVENT", "SIGN_IN_SUCCESS");
+     } else{
+       result.put("EVENT", "SIGN_IN_FAILED");
+     }
+
+     result.put("loggedIn", signedIn);
+     sendResult(signedIn, result);
+   }
 
     private void onShowFetchPlayerInfoRequested() {
         if (!signedIn) {
@@ -430,8 +448,7 @@ public class PlayGamesServices extends CordovaPlugin {
     public void onSubmitScore(String scoreBoard, Integer score, CallbackContext callbackContext) {
         if (!signedIn) {
             LOG.d(LOG_TAG, "Submitting Score failed: " + score.toString() + " to: " + scoreBoard);
-            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Score not submitted, player not signed in");
-            callbackContext.sendPluginResult(result);
+            sendUnauthorized("Score not submitted, player not signed in")
             return;
         }
 
@@ -450,8 +467,7 @@ public class PlayGamesServices extends CordovaPlugin {
     public void onUnlockAchievement(String achievementId, CallbackContext callbackContext) {
         if (!signedIn) {
             LOG.d(LOG_TAG, "Unlocking achievement failed: " + achievementId);
-            PluginResult result = new PluginResult(PluginResult.Status.ERROR, "Achievement not submitted, player not signed in");
-            callbackContext.sendPluginResult(result);
+            sendUnauthorized("Achievement not submitted, player not signed in")
             return;
         }
 
