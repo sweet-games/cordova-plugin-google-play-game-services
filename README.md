@@ -1,11 +1,12 @@
 Cordova Plugin Google Play Services
 ===================================
 
-![npm](https://img.shields.io/npm/v/cordova-plugin-google-play-game-services?style=for-the-badge)
-cordova-google-play-game
+![npm](https://img.shields.io/npm/v/cordova-plugin-google-play-game-services?style=for-the-badge) 
+
+[cordova-plugin-google-play-game-service](https://www.npmjs.com/package/cordova-plugin-google-play-game-services)
 ========================
 
-Cordova Plugin For Google Play Game Service
+Cordova Plugin For Google Play Games Service
 
 ### Before you start
 
@@ -14,7 +15,7 @@ Setup **Leaderboard** and **Achievement** in Google Play Developer Console https
 ## Install
 
 ```
-cordova plugin add cordova-plugin-google-play-game-service --variable APP_ID=YOUR_APP_ID
+cordova plugin add cordova-plugin-google-play-game-services --variable APP_ID=YOUR_APP_ID
 ```
 
 ### NOTE 
