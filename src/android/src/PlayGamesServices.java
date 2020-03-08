@@ -381,16 +381,6 @@ public class PlayGamesServices extends CordovaPlugin {
         displayName = "???";
         playerId = "???";
         */
-
-        try {
-            JSONObject result = new JSONObject();
-            result.put("EVENT", "DISCONNECTED");
-            result.put("message", message);
-
-            sendResult(true, result);
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
     }
 
     public void onShowAchievementsRequested() {
