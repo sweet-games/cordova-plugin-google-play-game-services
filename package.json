@@ -1,6 +1,6 @@
 {
   "name": "cordova-plugin-google-play-game-services",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Cordova wrapper fo Google Play Game Services",
   "cordova": {
     "id": "cordova-plugin-google-play-game-services",
