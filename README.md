@@ -19,7 +19,7 @@ cordova plugin add cordova-plugin-google-play-game-service --variable APP_ID=YOU
 
 ### NOTE 
 
-This plugin went with event based approach instead of callbacks. I needed a quick solution and events were easy to implement. Also, I just copied code base existing plugins and made few changed to suite my needs. 
+This plugin went with event based approach instead of callbacks. I needed a quick solution and events were easy to implement. Also, I just copied code from existing plugins and made few changed to suite my needs. Works for me, please be advised before using this plugin for your app. 
 
 ## Usage
 
