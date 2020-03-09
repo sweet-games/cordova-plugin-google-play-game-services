@@ -22,5 +22,6 @@
   "bugs": "https://github.com/sweet-games/cordova-plugin-google-play-game-services/issues",
   "homepage": "https://github.com/sweet-games/cordova-plugin-google-play-game-services/#README.md",
   "devDependencies": {},
-  "dependencies": {}
+  "dependencies": {},
+  "publishConfig": { "registry": "https://npm.pkg.github.com/" }
 }
