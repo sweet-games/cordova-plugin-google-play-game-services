@@ -3,7 +3,7 @@ Cordova Plugin Google Play Services
 
 ![npm](https://img.shields.io/npm/v/cordova-plugin-google-play-game-services?style=for-the-badge) 
 
-[cordova-plugin-google-play-game-service](https://www.npmjs.com/package/cordova-plugin-google-play-game-services)
+[cordova-plugin-google-play-game-services](https://www.npmjs.com/package/cordova-plugin-google-play-game-services)
 ========================
 
 Cordova Plugin For Google Play Games Service
