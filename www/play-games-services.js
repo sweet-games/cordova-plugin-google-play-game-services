@@ -8,7 +8,6 @@ var PlayGamesServices = function () {
 var handleSuccessCallback = function (callback, result) {
     try {
         console.log(PLAY_GAMES_SERVICES, "SUCCESS CALLBACK", JSON.stringify(result))
-        alert("play." + result.EVENT);
         cordova.fireDocumentEvent("play." + result.EVENT, result);
     } catch (e) {
     }
@@ -20,7 +19,6 @@ var handleSuccessCallback = function (callback, result) {
 var handleFailedCallback = function (callback, result) {
     try {
         console.log(PLAY_GAMES_SERVICES, "FAILED CALLBACK", JSON.stringify(result))
-        alert("play." + result.EVENT);
         cordova.fireDocumentEvent("play." + result.EVENT, result);
     } catch (e) {
     }
